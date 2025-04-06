@@ -1,205 +1,140 @@
 
 import { UserLayout } from "@/components/layout/UserLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, AlertTriangle, Shield, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, ArrowRight, BarChart3, Search, Clock, ScanLine } from "lucide-react";
+import { useState } from "react";
+import { StartScanDialog } from "@/components/scan-requests/StartScanDialog";
 
 export default function UserDashboard() {
-  const navigate = useNavigate();
-  
-  // Mock user data - in a real app, this would come from an API or auth context
-  const userData = {
-    name: "John Doe",
-    plan: "Premium",
-    scansUsed: 27,
-    scansLimit: 50,
-    takedownsUsed: 4,
-    takedownsLimit: 10,
-    lastScanDate: "2023-04-05T14:30:00Z",
-    lastTakedownDate: "2023-04-03T10:45:00Z"
-  };
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric"
-    }).format(date);
-  };
+  const [showStartScanDialog, setShowStartScanDialog] = useState(false);
 
   return (
     <UserLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold tracking-tight">Welcome, {userData.name}</h1>
-          <div className="bg-shield-purple text-white px-3 py-1 rounded-full text-sm font-semibold">
-            {userData.plan} Plan
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <Button 
+          onClick={() => setShowStartScanDialog(true)}
+          className="bg-shield-blue hover:bg-shield-blue/90"
+        >
+          <ScanLine className="mr-2 h-4 w-4" /> Start New Scan
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">Content Scans</CardTitle>
+            <CardDescription>Current scan status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">3</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              2 completed, 1 in progress
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Button variant="outline" size="sm" className="w-full" onClick={() => window.location.href = "/user/scans"}>
+              View Scans <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">Takedown Requests</CardTitle>
+            <CardDescription>Active DMCA notices</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">5</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              3 successful, 2 pending
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Button variant="outline" size="sm" className="w-full" onClick={() => window.location.href = "/user/takedowns"}>
+              View Takedowns <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">Usage Report</CardTitle>
+            <CardDescription>Current billing period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">60%</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              12/20 scans used
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Button variant="outline" size="sm" className="w-full" onClick={() => window.location.href = "/user/usage"}>
+              View Usage <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      <h2 className="text-xl font-semibold mt-8 mb-4">Recent Activity</h2>
+      <div className="space-y-4">
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+              <Search className="h-4 w-4 text-green-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">YouTube Scan Completed</h3>
+                <span className="text-xs text-slate-500">2 hours ago</span>
+              </div>
+              <p className="text-sm text-slate-700 mt-1">
+                Scan detected 3 potential matches across YouTube channels.
+              </p>
+            </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Scans Used</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {userData.scansUsed} / {userData.scansLimit}
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">Takedown Notice Sent</h3>
+                <span className="text-xs text-slate-500">1 day ago</span>
               </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-shield-blue"
-                  style={{ width: `${(userData.scansUsed / userData.scansLimit) * 100}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Takedowns Used</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {userData.takedownsUsed} / {userData.takedownsLimit}
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-shield-blue"
-                  style={{ width: `${(userData.takedownsUsed / userData.takedownsLimit) * 100}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Last Scan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatDate(userData.lastScanDate)}
-              </div>
-              <div className="text-sm text-slate-500 mt-1">
-                YouTube, TikTok
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">Last Takedown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatDate(userData.lastTakedownDate)}
-              </div>
-              <div className="text-sm text-slate-500 mt-1">
-                Instagram
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-slate-700 mt-1">
+                DMCA takedown request for YouTube content ID: YT-54321 submitted.
+              </p>
+            </div>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Search className="mr-2 h-5 w-5 text-shield-blue" />
-                Quick Scan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-slate-600">
-                Search for your content across social media platforms to detect unauthorized use.
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">Scan Request Submitted</h3>
+                <span className="text-xs text-slate-500">3 days ago</span>
+              </div>
+              <p className="text-sm text-slate-700 mt-1">
+                New TikTok content scan requested. Awaiting processing.
               </p>
-              <Button onClick={() => navigate("/user/scans/new")}>
-                Start New Scan
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="mr-2 h-5 w-5 text-shield-red" />
-                File Takedown
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-slate-600">
-                Request the removal of your unauthorized content using DMCA notices.
-              </p>
-              <Button onClick={() => navigate("/user/takedowns/new")}>
-                Request Takedown
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Shield className="mr-2 h-5 w-5 text-shield-blue" />
-              Platform Protection Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2 p-3 rounded-md bg-green-50">
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                <span>YouTube</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50">
-                <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                <span>Instagram</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-md bg-red-50">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <span>TikTok</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-md bg-blue-50">
-                <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                <span>Facebook</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="mr-2 h-5 w-5 text-shield-teal" />
-              Recent Templates
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2">
-              <div className="flex justify-between items-center p-3 border rounded-md hover:bg-slate-50 cursor-pointer">
-                <div>YouTube DMCA Template</div>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
-              </div>
-              <div className="flex justify-between items-center p-3 border rounded-md hover:bg-slate-50 cursor-pointer">
-                <div>Instagram Copyright Notice</div>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
-              </div>
-              <div className="flex justify-between items-center p-3 border rounded-md hover:bg-slate-50 cursor-pointer">
-                <div>TikTok Content Removal</div>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <StartScanDialog
+        open={showStartScanDialog}
+        onOpenChange={setShowStartScanDialog}
+      />
     </UserLayout>
   );
 }
