@@ -13,7 +13,10 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-semibold text-shield-blue">AI Shield Guardian</h1>
-            <Button onClick={() => navigate("/admin/dashboard")}>Admin Dashboard</Button>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => navigate("/user/dashboard")}>User Dashboard</Button>
+              <Button onClick={() => navigate("/admin/dashboard")}>Admin Dashboard</Button>
+            </div>
           </div>
         </div>
       </header>
@@ -24,8 +27,8 @@ const Index = () => {
             <h1 className="text-4xl font-bold mb-4">AI Shield Admin Dashboard</h1>
             <p className="text-xl text-gray-600 mb-8">Manage scan requests, takedowns, and DMCA processes across platforms</p>
             <div className="flex gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate("/admin/dashboard")}>Go to Dashboard</Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/admin/scan-requests")}>View Scan Requests</Button>
+              <Button size="lg" onClick={() => navigate("/admin/dashboard")}>Go to Admin Dashboard</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate("/user/dashboard")}>Go to User Dashboard</Button>
             </div>
           </div>
           
