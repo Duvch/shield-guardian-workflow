@@ -284,7 +284,7 @@ export function DMCATemplates() {
               <Label htmlFor="template" className="flex justify-between">
                 <span>Template</span>
                 <span className="text-xs text-slate-500">
-                  Use {{userName}}, {{contentURL}}, etc. as variables
+                  Use &#123;&#123;userName&#125;&#125;, &#123;&#123;contentURL&#125;&#125;, etc. as variables
                 </span>
               </Label>
               <Textarea
@@ -334,7 +334,7 @@ export function DMCATemplates() {
               <Label htmlFor="new-template" className="flex justify-between">
                 <span>Template</span>
                 <span className="text-xs text-slate-500">
-                  Use {{userName}}, {{contentURL}}, etc. as variables
+                  Use &#123;&#123;userName&#125;&#125;, &#123;&#123;contentURL&#125;&#125;, etc. as variables
                 </span>
               </Label>
               <Textarea
