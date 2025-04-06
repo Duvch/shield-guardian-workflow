@@ -1,3 +1,4 @@
+
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,26 +10,14 @@ import {
   Search, 
   Shield, 
   User, 
-  XCircle,
-  ScanLine
+  XCircle 
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { StartScanDialog } from "@/components/scan-requests/StartScanDialog";
 
 export default function AdminDashboard() {
-  const [showStartScanDialog, setShowStartScanDialog] = useState(false);
-
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <Button 
-          onClick={() => setShowStartScanDialog(true)}
-          className="bg-shield-blue hover:bg-shield-blue/90"
-        >
-          <ScanLine className="mr-2 h-4 w-4" /> Start New Scan
-        </Button>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -231,11 +220,6 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <StartScanDialog
-        open={showStartScanDialog}
-        onOpenChange={setShowStartScanDialog}
-      />
     </AdminLayout>
   );
 }
