@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Search, MoreHorizontal, Shield, BarChart3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,7 +208,9 @@ export function UsersTable() {
             <tbody>
               {filteredUsers.map((user) => {
                 const scansPercentage = calculateUsagePercentage(user.scansUsed, user.scansLimit);
-                const takedownsPercentage = calculateUsagePercentage(user.takedownsUsed, user.takedownsLimit);
+                const takedownsPercentage = typeof user.takedownsLimit === "number" 
+                  ? calculateUsagePercentage(user.takedownsUsed, user.takedownsLimit) 
+                  : 0;
                 
                 return (
                   <tr key={user.id} className="border-b animate-fade-in">
