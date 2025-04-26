@@ -1,9 +1,7 @@
-
-import { useState } from "react";
-import { Search, MoreHorizontal, Shield, BarChart3, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MoreHorizontal, Shield, BarChart3, AlertTriangle, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,87 +19,74 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db"; // Import your Drizzle DB instance
+import { users } from "@/lib/schema"; // Import your schema
 
+// Interface based on your database schema
 interface User {
-  id: string;
+  id: number;
   email: string;
-  name: string;
-  plan: "Demo" | "Premium" | "Pro";
-  scansUsed: number;
-  scansLimit: number;
-  takedownsUsed: number;
-  takedownsLimit: number | "Unlimited";
-  lastActive: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  plan: "Free" | "Pro" | "Enterprise";
+  isActive: boolean;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const mockUsers: User[] = [
-  {
-    id: "usr-001",
-    email: "john.doe@example.com",
-    name: "John Doe",
-    plan: "Premium",
-    scansUsed: 12,
-    scansLimit: 50,
-    takedownsUsed: 2,
-    takedownsLimit: 10,
-    lastActive: "2023-04-05T14:30:00Z"
-  },
-  {
-    id: "usr-002",
-    email: "alice.smith@example.com",
-    name: "Alice Smith",
-    plan: "Demo",
-    scansUsed: 4,
-    scansLimit: 5,
-    takedownsUsed: 1,
-    takedownsLimit: 1,
-    lastActive: "2023-04-05T12:15:00Z"
-  },
-  {
-    id: "usr-003",
-    email: "mark.wilson@example.com",
-    name: "Mark Wilson",
-    plan: "Pro",
-    scansUsed: 35,
-    scansLimit: 100,
-    takedownsUsed: 5,
-    takedownsLimit: "Unlimited",
-    lastActive: "2023-04-05T10:45:00Z"
-  },
-  {
-    id: "usr-004",
-    email: "emily.jones@example.com",
-    name: "Emily Jones",
-    plan: "Premium",
-    scansUsed: 27,
-    scansLimit: 50,
-    takedownsUsed: 4,
-    takedownsLimit: 10,
-    lastActive: "2023-04-05T09:20:00Z"
-  },
-  {
-    id: "usr-005",
-    email: "sarah.lee@example.com",
-    name: "Sarah Lee",
-    plan: "Demo",
-    scansUsed: 5,
-    scansLimit: 5,
-    takedownsUsed: 0,
-    takedownsLimit: 1,
-    lastActive: "2023-04-05T08:10:00Z"
-  }
-];
-
 export function UsersTable() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [usersData, setUsersData] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<string>("All");
   const { toast } = useToast();
 
-  const plans = ["All", "Demo", "Premium", "Pro"];
+  const plans = ["All", "Free", "Pro", "Enterprise"];
   
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  // Fetch users from Neon DB with Drizzle ORM
+  useEffect(() => {
+    const fetchUsersFromDb = async () => {
+      try {
+        setLoading(true);
+        // Using Drizzle ORM to query the users table
+        const dbUsers = await db.select().from(users);
+        
+        // Map database results to our component's interface
+        const mappedUsers: User[] = dbUsers.map(user => ({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatar: user.avatar || "/placeholder.svg?height=40&width=40",
+          plan: user.plan,
+          isActive: user.isActive,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString()
+        }));
+        
+        setUsersData(mappedUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load users from database",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUsersFromDb();
+  }, [toast]);
+
+  const filteredUsers = usersData.filter(user => {
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || 
                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPlan = selectedPlan === "All" || user.plan === selectedPlan;
     return matchesSearch && matchesPlan;
@@ -109,12 +94,12 @@ export function UsersTable() {
 
   const getPlanBadgeStyle = (plan: string) => {
     switch(plan) {
+      case "Enterprise":
+        return "bg-purple-600 text-white";
       case "Pro":
-        return "bg-shield-blue text-white";
-      case "Premium":
-        return "bg-shield-purple text-white";
+        return "bg-blue-600 text-white";
       default:
-        return "bg-shield-gray text-white";
+        return "bg-slate-500 text-white";
     }
   };
 
@@ -123,45 +108,88 @@ export function UsersTable() {
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
-      hour: "numeric",
-      minute: "numeric"
+      year: "numeric"
     }).format(date);
   };
 
-  const handlePlanChange = (userId: string, newPlan: string) => {
-    // In a real application, this would be an API call to update the user's plan
-    const updatedUsers = users.map(user => {
-      if (user.id === userId) {
-        const updatedUser = { ...user, plan: newPlan as "Demo" | "Premium" | "Pro" };
-        
-        // Update scan and takedown limits based on new plan
-        if (newPlan === "Demo") {
-          updatedUser.scansLimit = 5;
-          updatedUser.takedownsLimit = 1;
-        } else if (newPlan === "Premium") {
-          updatedUser.scansLimit = 50;
-          updatedUser.takedownsLimit = 10;
-        } else if (newPlan === "Pro") {
-          updatedUser.scansLimit = 100;
-          updatedUser.takedownsLimit = "Unlimited";
+  // Update user plan using Drizzle ORM
+  const handlePlanChange = async (userId: number, newPlan: string) => {
+    try {
+      // Using Drizzle ORM to update the user's plan
+      await db.update(users)
+        .set({ 
+          plan: newPlan as "Free" | "Pro" | "Enterprise",
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId));
+      
+      // Update local state to reflect change
+      const updatedUsers = usersData.map(user => {
+        if (user.id === userId) {
+          return { 
+            ...user, 
+            plan: newPlan as "Free" | "Pro" | "Enterprise",
+            updatedAt: new Date().toISOString()
+          };
         }
-        
-        return updatedUser;
-      }
-      return user;
-    });
-    
-    setUsers(updatedUsers);
-    
-    toast({
-      title: "Plan Updated",
-      description: `User plan has been updated to ${newPlan}.`,
-    });
+        return user;
+      });
+      
+      setUsersData(updatedUsers);
+      
+      toast({
+        title: "Plan Updated",
+        description: `User plan has been updated to ${newPlan}.`,
+      });
+    } catch (error) {
+      console.error("Error updating user plan:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update user plan in database.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const calculateUsagePercentage = (used: number, limit: number | "Unlimited") => {
-    if (limit === "Unlimited") return 0;
-    return (used / limit) * 100;
+  // Toggle user active status using Drizzle ORM
+  const toggleUserStatus = async (userId: number, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      
+      // Using Drizzle ORM to update the user's active status
+      await db.update(users)
+        .set({ 
+          isActive: newStatus,
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId));
+      
+      // Update local state to reflect change
+      const updatedUsers = usersData.map(user => {
+        if (user.id === userId) {
+          return { 
+            ...user, 
+            isActive: newStatus,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return user;
+      });
+      
+      setUsersData(updatedUsers);
+      
+      toast({
+        title: "Status Updated",
+        description: `User is now ${newStatus ? 'active' : 'inactive'}.`,
+      });
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update user status in database.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -191,6 +219,10 @@ export function UsersTable() {
             </SelectContent>
           </Select>
         </div>
+        <Button variant="outline" className="flex items-center gap-2">
+          <UserCog className="h-4 w-4" />
+          Add User
+        </Button>
       </div>
 
       <div className="rounded-md border bg-white">
@@ -199,78 +231,67 @@ export function UsersTable() {
             <thead>
               <tr className="border-b bg-slate-50">
                 <th className="px-4 py-3 text-left font-medium text-slate-600">User</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Email</th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">Plan</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Scans Used</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Takedowns Used</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Last Active</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Created</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Updated</th>
                 <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => {
-                const scansPercentage = calculateUsagePercentage(user.scansUsed, user.scansLimit);
-                const takedownsPercentage = calculateUsagePercentage(user.takedownsUsed, user.takedownsLimit);
-                
-                return (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-6 text-center text-slate-500">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
                   <tr key={user.id} className="border-b animate-fade-in">
                     <td className="px-4 py-3">
-                      <div>
-                        <div className="font-medium text-slate-700">{user.name}</div>
-                        <div className="text-slate-500 text-xs">{user.email}</div>
+                      <div className="flex items-center">
+                        <img 
+                          src={user.avatar} 
+                          alt={`${user.firstName} ${user.lastName}`} 
+                          className="h-8 w-8 rounded-full mr-2" 
+                        />
+                        <div className="font-medium text-slate-700">
+                          {user.firstName} {user.lastName}
+                        </div>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {user.email}
+                    </td>
                     <td className="px-4 py-3">
-                      <Select defaultValue={user.plan} onValueChange={(value) => handlePlanChange(user.id, value)}>
+                      <Select 
+                        defaultValue={user.plan} 
+                        onValueChange={(value) => handlePlanChange(user.id, value)}
+                      >
                         <SelectTrigger className={cn("px-2 h-7 rounded-md w-24", getPlanBadgeStyle(user.plan))}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Demo">Demo</SelectItem>
-                          <SelectItem value="Premium">Premium</SelectItem>
+                          <SelectItem value="Free">Free</SelectItem>
                           <SelectItem value="Pro">Pro</SelectItem>
+                          <SelectItem value="Enterprise">Enterprise</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="w-32">
-                        <div className="flex justify-between text-xs">
-                          <span>{user.scansUsed}</span>
-                          <span className="text-slate-500">
-                            {user.scansLimit === "Unlimited" ? "∞" : user.scansLimit}
-                          </span>
-                        </div>
-                        <div className="mt-1 h-1.5 w-full rounded-full bg-slate-100">
-                          <div
-                            className={cn(
-                              "h-full rounded-full",
-                              scansPercentage > 80 ? "bg-shield-red" : "bg-shield-blue"
-                            )}
-                            style={{ width: `${Math.min(scansPercentage, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="w-32">
-                        <div className="flex justify-between text-xs">
-                          <span>{user.takedownsUsed}</span>
-                          <span className="text-slate-500">
-                            {user.takedownsLimit === "Unlimited" ? "∞" : user.takedownsLimit}
-                          </span>
-                        </div>
-                        <div className="mt-1 h-1.5 w-full rounded-full bg-slate-100">
-                          <div
-                            className={cn(
-                              "h-full rounded-full",
-                              takedownsPercentage > 80 ? "bg-shield-red" : "bg-shield-blue"
-                            )}
-                            style={{ width: `${Math.min(takedownsPercentage, 100)}%` }}
-                          />
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <div className={`h-2 w-2 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span className="text-slate-700">
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-slate-700">
-                      {formatDate(user.lastActive)}
+                      {formatDate(user.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatDate(user.updatedAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <DropdownMenu>
@@ -288,21 +309,23 @@ export function UsersTable() {
                           </DropdownMenuItem>
                           <DropdownMenuItem className="flex items-center">
                             <BarChart3 className="mr-2 h-4 w-4" />
-                            <span>Usage Report</span>
+                            <span>View Scan History</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="flex items-center text-amber-600">
+                          <DropdownMenuItem 
+                            className="flex items-center"
+                            onClick={() => toggleUserStatus(user.id, user.isActive)}
+                          >
                             <AlertTriangle className="mr-2 h-4 w-4" />
-                            <span>Override Limits</span>
+                            <span>{user.isActive ? 'Deactivate' : 'Activate'} User</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
                   </tr>
-                );
-              })}
-              {filteredUsers.length === 0 && (
+                ))
+              ) : (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-slate-500">
+                  <td colSpan={7} className="py-6 text-center text-slate-500">
                     No users found
                   </td>
                 </tr>
